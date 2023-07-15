@@ -89,6 +89,9 @@ if os.path.exists('trie.pkl'):
     with open('trie.pkl', 'rb') as f:
         trie = pickle.load(f)
 
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
 def main():
     while True:
         print("Por favor, selecciona una de las siguientes opciones:")
@@ -121,13 +124,24 @@ def handle_option_1():
     for i, palabras in enumerate(palabras_por_seccion):
         print(f"Las palabras generadas para la sección {i + 1} son: {', '.join(palabras)}")
     input("Presiona enter para continuar.")
+    clear_screen()
 
 def handle_option_2():
     print("-== Español a T9. ==-")
     text = input("Introduce el texto que quieres convertir: ")
     t9_text = translate_to_t9(text)
     print("Texto en formato T9: ", t9_text)
+
+    try:
+        import pyperclip
+        if input("Presionar 1 para copiar en el portapapeles: ") == "1":
+            pyperclip.copy(t9_text)
+            print("Texto copiado al portapapeles.")
+    except ModuleNotFoundError:
+        print("El módulo 'pyperclip' no está instalado. Copia el texto manualmente.")
+
     input("Presiona enter para continuar.")
+    clear_screen()
 
 def handle_option_3():
     print("-== Generar Trie desde diccionario.txt. ==-")
@@ -138,13 +152,14 @@ def handle_option_3():
     with open('trie.pkl', 'wb') as f:
         pickle.dump(trie, f)
     input("Presiona enter para continuar.")
+    clear_screen()
 
 def generar_palabras(codigo):
     secciones = codigo.split('0')
     palabras_por_seccion = []
     for seccion in secciones:
         palabras = trie.search(trie.root, seccion, "")
-        if not palabras:  
+        if not palabras:
             palabras = ["(corregida) " + palabra for palabra in
                         trie.search_one_edit(trie.root, seccion,
                                              "")]
