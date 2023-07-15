@@ -1,5 +1,3 @@
-import tkinter as tk
-from tkinter import messagebox, simpledialog
 import unicodedata
 import pickle
 import string
@@ -92,56 +90,61 @@ if os.path.exists('trie.pkl'):
         trie = pickle.load(f)
 
 def main():
-    root = tk.Tk()
-    root.geometry("300x200")
-    root.title("Traductor T9")
+    while True:
+        print("Por favor, selecciona una de las siguientes opciones:")
+        print("1) T9 a Español")
+        print("2) Español a T9.")
+        print("3) Generar Trie desde diccionario.txt.")
+        print("4) Salir.")
 
-    label_option = tk.Label(root, text="Selecciona una opción:")
-    label_option.pack()
+        option = input("Introduce el número de la opción que deseas seleccionar: ")
 
-    button1 = tk.Button(root, text="1) T9 a Español", command=handle_option_1)
-    button1.pack()
-
-    button2 = tk.Button(root, text="2) Español a T9", command=handle_option_2)
-    button2.pack()
-
-    button3 = tk.Button(root, text="3) Generar Trie desde diccionario.txt", command=handle_option_3)
-    button3.pack()
-
-    button4 = tk.Button(root, text="4) Salir", command=root.quit)
-    button4.pack()
-
-    root.mainloop()
+        if option == "1":
+            handle_option_1()
+        elif option == "2":
+            handle_option_2()
+        elif option == "3":
+            handle_option_3()
+        elif option == "4":
+            print("Saliendo del programa.")
+            break
+        else:
+            print("Opción no válida. Por favor, intenta de nuevo.")
 
 def handle_option_1():
+    print("-== T9 a Español ==-")
     if trie is None:
-        messagebox.showinfo("Error", "No se encontró el archivo Trie. Por favor, genera un Trie primero usando la opción 3.")
+        print("No se encontró el archivo Trie. Por favor, genera un Trie primero usando la opción 3.")
         return
-    codigo = simpledialog.askstring("Input", "Por favor, introduce los números T9 a traducir, separa las palabras con 0:")
+    codigo = input("Por favor, introduce los números T9 a traducir, separa las palabras con 0: ")
     palabras_por_seccion = generar_palabras(codigo)
     for i, palabras in enumerate(palabras_por_seccion):
-        messagebox.showinfo("Resultado", f"Las palabras generadas para la sección {i + 1} son: {', '.join(palabras)}")
+        print(f"Las palabras generadas para la sección {i + 1} son: {', '.join(palabras)}")
+    input("Presiona enter para continuar.")
 
 def handle_option_2():
-    text = simpledialog.askstring("Input", "Introduce el texto que quieres convertir:")
+    print("-== Español a T9. ==-")
+    text = input("Introduce el texto que quieres convertir: ")
     t9_text = translate_to_t9(text)
-    messagebox.showinfo("Resultado", f"Texto en formato T9: {t9_text}")
+    print("Texto en formato T9: ", t9_text)
+    input("Presiona enter para continuar.")
 
 def handle_option_3():
+    print("-== Generar Trie desde diccionario.txt. ==-")
     trie = Trie()
     with open('diccionario.txt', 'r', encoding='utf-8') as f:
         for linea in f:
             trie.insert(normalize_text(linea.strip()))
     with open('trie.pkl', 'wb') as f:
         pickle.dump(trie, f)
-    messagebox.showinfo("Resultado", "Trie generado y guardado con éxito.")
+    input("Presiona enter para continuar.")
 
 def generar_palabras(codigo):
     secciones = codigo.split('0')
     palabras_por_seccion = []
     for seccion in secciones:
         palabras = trie.search(trie.root, seccion, "")
-        if not palabras:
+        if not palabras:  
             palabras = ["(corregida) " + palabra for palabra in
                         trie.search_one_edit(trie.root, seccion,
                                              "")]
