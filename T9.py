@@ -2,6 +2,8 @@ import unicodedata
 import pickle
 import string
 import os
+import pynput
+import pyperclip
 
 # Mapeo de teclas T9 a letras, considerando letras acentuadas
 t9 = {
@@ -26,12 +28,10 @@ for char in punctuation:
     t9_dict[char] = '1'
 t9_dict[space] = '0'
 
-
 class Node:
     def __init__(self):
         self.children = {}
         self.is_word = False
-
 
 class Trie:
     def __init__(self):
@@ -73,7 +73,6 @@ class Trie:
                  len(number) - extra_char_limit <= len(word) <= len(number) + extra_char_limit]
         return words
 
-
 # Función para normalizar texto (eliminar tildes y diéresis)
 def normalize_text(text):
     normalized_text = ""
@@ -88,7 +87,6 @@ def normalize_text(text):
             )
     return normalized_text
 
-
 # Load trie from file if it exists
 trie = None
 
@@ -101,10 +99,8 @@ if os.path.exists('trie.pkl'):
     with open('trie.pkl', 'rb') as f:
         trie = pickle.load(f)
 
-
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
-
 
 def main():
     while True:
@@ -131,7 +127,6 @@ def main():
         else:
             print("Opción no válida. Por favor, intenta de nuevo.")
 
-
 def handle_option_5():
     global correction_char_limit
     global extra_char_limit
@@ -154,7 +149,6 @@ def handle_option_5():
     input("Presiona enter para continuar.")
     clear_screen()
 
-
 def handle_option_1():
     try:
         from pynput import keyboard
@@ -172,15 +166,19 @@ def handle_option_1():
     def on_press(key):
         nonlocal codigo  # Access the outer variable
         try:
-            num = key.char  # get the character pressed
+            num = key.char if hasattr(key, 'char') else str(key.vk - 96)  # handle numpad keys
+            print(f"Tecla presionada: {num}")  # Debugging line
+            if num == '0':
+                # Stop listener
+                listener.stop()
+                return False
+            if num is not None:  # Check if num is not None before concatenating
+                codigo += num
+            print(f"Codigo después de la presión de tecla: {codigo}")  # Debugging line
+            palabras = trie.search(trie.root, codigo, "")
+            print(f"Las palabras generadas hasta ahora son: {', '.join(palabras)}")
         except AttributeError:
-            num = key.name  # get the name of the key pressed (for special keys like 'enter')
-        if num == '0':
-            # Stop listener
-            return False
-        codigo += num
-        palabras = trie.search(trie.root, codigo, "")
-        print(f"Las palabras generadas hasta ahora son: {', '.join(palabras)}")
+            pass
 
     # Start the listener
     with keyboard.Listener(on_press=on_press) as listener:
@@ -188,7 +186,6 @@ def handle_option_1():
 
     input("Presiona enter para continuar.")
     clear_screen()
-
 
 def handle_option_2():
     print("-== Español a T9. ==-")
@@ -207,7 +204,6 @@ def handle_option_2():
     input("Presiona enter para continuar.")
     clear_screen()
 
-
 def handle_option_3():
     print("-== Generar Trie desde diccionario.txt. ==-")
     trie = Trie()
@@ -218,7 +214,6 @@ def handle_option_3():
         pickle.dump(trie, f)
     input("Presiona enter para continuar.")
     clear_screen()
-
 
 def generar_palabras(codigo):
     secciones = codigo.split('0')
@@ -232,12 +227,10 @@ def generar_palabras(codigo):
         palabras_por_seccion.append(palabras)
     return palabras_por_seccion
 
-
 def translate_to_t9(text):
     text = text.upper()
     t9_text = "".join(t9_dict.get(char, char) for char in text)
     return t9_text
-
 
 if __name__ == "__main__":
     main()
