@@ -112,9 +112,8 @@ def main():
         print("1) T9 a Español")
         print("2) Español a T9.")
         print("3) Generar Trie desde diccionario.txt.")
-        print("4) Salir.",
-        print("5) Configurar autocorrección."),
-        )
+        print("4) Salir.")
+        print("5) Configurar autocorrección.")
 
         option = input("Introduce el número de la opción que deseas seleccionar: ")
 
@@ -142,36 +141,12 @@ def handle_option_5():
     try:
         print(
             "(1/3) Introduce cuantos caracteres se pueden modificar para la corrección.")
-
-        #El valor de correction_char_limit determina cuántos caracteres se pueden corregir en la entrada original.
-        # Si correction_char_limit es 1, entonces la función buscará palabras que se puedan obtener cambiando
-        # un solo carácter en la entrada original. Si correction_char_limit es 2, la función buscará palabras que
-        # se puedan obtener cambiando dos caracteres en la entrada original, y así sucesivamente.
         correction_char_limit = int(input("Límite de caracteres para corrección: "))
         print(
             "(2/3) Numero de caracteres ± que puede tener la palabra corregida respecto a la original")
-        # Esta línea de código filtra la lista de palabras generadas para incluir sólo las palabras cuya longitud
-        # está dentro del rango definido por la longitud de la entrada original (len(number)) más o menos el valor
-        # de extra_char_limit.
-        #
-        # Por ejemplo, si la entrada original es 3 caracteres y extra_char_limit es 1, la función devolverá palabras
-        # de longitud 2 a 4. Si extra_char_limit es 0, entonces la función devolverá solo palabras que tengan exactamente
-        # la misma longitud que la entrada original
         extra_char_limit = int(input("Límite de caracteres extra: "))
         print("¿Quieres generar resultados de palabras corregidas para respuestas que sí están en el diccionario?")
-
         use_correction_on_dictionary_words = input(
-            # La variable use_correction_on_dictionary_words determina si el programa debe intentar buscar posibles
-            # correcciones para palabras que ya se encuentran en el diccionario.
-            #
-            # Si use_correction_on_dictionary_words es True, entonces incluso cuando se encuentra una palabra exacta
-            # en el diccionario, el programa aún buscará y devolverá palabras "corregidas" que están a una distancia
-            # de edición de la entrada original. Esto puede ser útil si se sospecha que la entrada original podría
-            # contener errores de tipeo, incluso si resulta en una palabra válida.
-            #
-            # Por otro lado, si use_correction_on_dictionary_words es False, entonces cuando se encuentra una palabra
-            # exacta en el diccionario, el programa asume que esta es la palabra correcta y no busca ni devuelve palabras "corregidas".
-
             "(3/3) Generar palabras corregidas para respuestas en el diccionario (s/n): ").lower() == 's'
     except ValueError:
         print("Entrada no válida. Por favor, intenta de nuevo.")
@@ -181,15 +156,36 @@ def handle_option_5():
 
 
 def handle_option_1():
-    global trie  # Agregar esta línea para acceder a la variable global trie
+    try:
+        from pynput import keyboard
+    except ImportError:
+        print("Error: La biblioteca 'pynput' no está instalada. Para instalarla, ejecuta 'pip install pynput' en tu terminal.")
+        return
+
+    global trie
     print("-== T9 a Español ==-")
     if trie is None:
         print("No se encontró el archivo Trie. Por favor, genera un Trie primero usando la opción 3.")
         return
-    codigo = input("Por favor, introduce los números T9 a traducir, separa las palabras con 0: ")
-    palabras_por_seccion = generar_palabras(codigo)
-    for i, palabras in enumerate(palabras_por_seccion):
-        print(f"Las palabras generadas para la sección {i + 1} son: {', '.join(palabras)}")
+    codigo = ""
+
+    def on_press(key):
+        nonlocal codigo  # Access the outer variable
+        try:
+            num = key.char  # get the character pressed
+        except AttributeError:
+            num = key.name  # get the name of the key pressed (for special keys like 'enter')
+        if num == '0':
+            # Stop listener
+            return False
+        codigo += num
+        palabras = trie.search(trie.root, codigo, "")
+        print(f"Las palabras generadas hasta ahora son: {', '.join(palabras)}")
+
+    # Start the listener
+    with keyboard.Listener(on_press=on_press) as listener:
+        listener.join()
+
     input("Presiona enter para continuar.")
     clear_screen()
 
